@@ -1,42 +1,31 @@
-const express = require("express");
-require("dotenv").config();
+const express = require('express');
 const app = express();
 app.use(express.json());
-const {
-  GetAllUsers,
-  Signup,
-  login,
-  protect,
-  verifyUser,
-  upload,
-} = require("./oprations/actions");
-const multer = require("multer");
-const { storage } = require("./storage");
+const {storage} = require('./storage');
+const path = require('path');
+const multer = require('multer');
+const {resizeImages, uploadImages} = require('./editOprations/editactions');
 
-const uploadAvatar = multer({
-  storage: storage,
-  limits: { fileSize: 5000000 },
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+
+const upload = multer({
+	storage: storage,
 });
 
-app.get("/", (_req, res) => {
-  res.status(200).json({
-    status: "success",
-    message: "server is running fine",
-  });
+app.get('/', (_req, res) => {
+	res.status(200).json({
+		status: 'success',
+		message: 'server is running fine',
+	});
 });
 
-app.get("/users", protect, GetAllUsers);
-app.get("/verify", verifyUser);
+app.post('/upload', upload.array(), resizeImages, uploadImages);
 
-app.post("/signup", Signup);
-app.post("/login", login);
-app.post("/upload", uploadAvatar.single(), upload);
-
-app.use("/", (req, res) => {
-  res.status(404).json({
-    status: "failed",
-    message: `${req.originalUrl} is not found in this server`,
-  });
+app.use('/', (req, res) => {
+	res.status(404).json({
+		status: 'failed',
+		message: `${req.originalUrl} is not found in this server`,
+	});
 });
 
 module.exports = app;
